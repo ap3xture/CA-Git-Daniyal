@@ -16,7 +16,7 @@ loop:
     loopj:
         bge x29, x6, endj # end if false , j<b 
 
-        slli x8, x29, 4 #j*4
+        srli x8, x29, 4 #j*4
 
         add x11, x10, x8# D[j*4]
 
