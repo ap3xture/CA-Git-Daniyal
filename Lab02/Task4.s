@@ -16,11 +16,11 @@ loop:
     loopj:
         bge x29, x6, endj # end if false , j<b 
 
-        srli x8, x29, 4 #j*4
+        slli x8, x29, 2 #j*4
 
-        add x11, x10, x8# D[j*4]
+        add x11, x10, x8# 0xDbase + [j*4]
 
-        add x9, x7,x29
+        add x9, x7,x29 #i +j
 
         sw x9,0x0(x11)  # set D[j*4] = i+j
 
@@ -29,7 +29,7 @@ loop:
         j loopj             # back to loop
     endj:
 
-    li x29, 0 #j for second loop
+    li x29, 0 #j =0 after one iteration of i 
 
 
     addi x7, x7, 1    # i++
