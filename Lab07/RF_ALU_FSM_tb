@@ -1,0 +1,113 @@
+`timescale 1ns / 1ps
+
+module RF_ALU_FSM_tb;
+    reg clk, rst;
+    
+    // RF signals
+    reg RF_WE;
+    reg [4:0] rs1, rs2, rd;
+    reg [31:0] RF_WriteData;
+    wire [31:0] ReadData1, ReadData2;
+    
+    // ALU signals
+    reg [3:0] ALU_Control; 
+    wire [31:0] ALU_Result;
+    wire ALU_Zero;
+
+    // Instantiate Register File
+    RegisterFile rf (
+        .clk(clk), .rst(rst), .WriteEnable(RF_WE),
+        .rs1(rs1), .rs2(rs2), .rd(rd), .WriteData(RF_WriteData),
+        .ReadData1(ReadData1), .ReadData2(ReadData2)
+    );
+
+    // Instantiate ALU_32bit based on the provided top file
+    ALU_32bit my_alu (
+        .A(ReadData1),
+        .B(ReadData2),
+        .ALUControl(ALU_Control),
+        .Result(ALU_Result),
+        .Zero(ALU_Zero)
+    );
+
+    // FSM States
+    localparam IDLE = 3'd0;
+    localparam INIT_REGS = 3'd1; // Setup state to load x1, x2, x3
+    localparam READ_REGISTERS = 3'd2;
+    localparam ALU_OPERATION = 3'd3;
+    localparam WRITE_REGISTERS = 3'd4;
+    localparam DONE = 3'd5;
+
+    reg [2:0] state;
+    reg [3:0] op_index;
+    
+    always #5 clk = ~clk;
+
+    initial begin
+        clk = 0; rst = 1;
+        state = IDLE;
+        op_index = 0;
+        RF_WE = 0; rs1 = 0; rs2 = 0; rd = 0; RF_WriteData = 0; ALU_Control = 0;
+        #15 rst = 0;
+    end
+
+    // FSM Logic
+    always @(posedge clk) begin
+        if (rst) begin
+            state <= IDLE;
+        end else begin
+            case (state)
+                IDLE: begin
+                    state <= INIT_REGS;
+                    op_index <= 0;
+                end
+                
+                INIT_REGS: begin
+                    // Write known constants
+                    RF_WE <= 1;
+                    if (op_index == 0) begin rd <= 1; RF_WriteData <= 32'h10101010; op_index <= 1; end
+                    else if (op_index == 1) begin rd <= 2; RF_WriteData <= 32'h01010101; op_index <= 2; end
+                    else if (op_index == 2) begin rd <= 3; RF_WriteData <= 32'h00000005; op_index <= 0; state <= READ_REGISTERS; end
+                end
+
+                READ_REGISTERS: begin
+                    RF_WE <= 0;
+                    rs1 <= 1; // Read x1
+                    rs2 <= 2; // Read x2
+                    state <= ALU_OPERATION;
+                end
+
+                ALU_OPERATION: begin
+                    // Map op_index to your ALU Control codes (e.g., 0=ADD, 1=SUB)
+                    ALU_Control <= op_index; 
+                    state <= WRITE_REGISTERS;
+                end
+
+                WRITE_REGISTERS: begin
+                    RF_WE <= 1;
+                    rd <= 4 + op_index; // Write results to x4, x5...
+                    RF_WriteData <= ALU_Result;
+                    
+                    // BEQ-style conditional flag test on last loop
+                    if (op_index == 6) begin // Adjust '6' based on how many ALU operations you want to test
+                        if (ALU_Zero) begin
+                            $display("Zero Flag Asserted!");
+                        end
+                        state <= DONE;
+                    end else begin
+                        op_index <= op_index + 1;
+                        state <= READ_REGISTERS;
+                    end
+                end
+
+                DONE: begin
+                    RF_WE <= 0;
+                    // Test read-after-write timing
+                    rs1 <= 4; 
+                    $display("Simulation Complete.");
+                    $finish;
+                end
+            endcase
+        end
+    end
+endmodule
