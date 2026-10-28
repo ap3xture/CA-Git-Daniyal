@@ -1,0 +1,86 @@
+`timescale 1ns/1ps
+
+module control_tb;
+    // Inputs
+    reg [6:0] opcode;
+    reg [2:0] funct3;
+    reg [6:0] funct7;
+
+    // Outputs
+    wire RegWrite;
+    wire [1:0] ALUOp;
+    wire MemRead;
+    wire MemWrite;
+    wire ALUSrc;
+    wire MemtoReg;
+    wire Branch;
+    wire [3:0] ALUControl;
+
+    // Instantiate Main Control
+    MainControl mc (
+        .opcode(opcode),
+        .RegWrite(RegWrite),
+        .ALUOp(ALUOp),
+        .MemRead(MemRead),
+        .MemWrite(MemWrite),
+        .ALUSrc(ALUSrc),
+        .MemtoReg(MemtoReg),
+        .Branch(Branch)
+    );
+
+    // Instantiate ALU Control
+    ALUControl alu_ctrl (
+        .ALUOp(ALUOp),
+        .funct3(funct3),
+        .funct7(funct7),
+        .ALUControl(ALUControl)
+    );
+
+    initial begin
+        // R-Type: ADD
+        opcode = 7'b0110011; funct3 = 3'b000; funct7 = 7'b0000000; #10;
+        
+        // I-Type: ADDI
+        opcode = 7'b0010011; funct3 = 3'b000; funct7 = 7'b0000000; #10;
+        
+        // R-Type: SUB
+        opcode = 7'b0110011; funct3 = 3'b000; funct7 = 7'b0100000; #10;
+        
+        // R-Type: SLL
+        opcode = 7'b0110011; funct3 = 3'b001; funct7 = 7'b0000000; #10;
+        
+        // R-Type: SRL
+        opcode = 7'b0110011; funct3 = 3'b101; funct7 = 7'b0000000; #10;
+        
+        // R-Type: AND
+        opcode = 7'b0110011; funct3 = 3'b111; funct7 = 7'b0000000; #10;
+        
+        // R-Type: OR
+        opcode = 7'b0110011; funct3 = 3'b110; funct7 = 7'b0000000; #10;
+        
+        // R-Type: XOR
+        opcode = 7'b0110011; funct3 = 3'b100; funct7 = 7'b0000000; #10;
+        
+        // Load: LW
+        opcode = 7'b0000011; funct3 = 3'b010; funct7 = 7'b0000000; #10;
+        
+        // Load: LH
+        opcode = 7'b0000011; funct3 = 3'b001; funct7 = 7'b0000000; #10;
+        
+        // Load: LB
+        opcode = 7'b0000011; funct3 = 3'b000; funct7 = 7'b0000000; #10;
+        
+        // Store: SW
+        opcode = 7'b0100011; funct3 = 3'b010; funct7 = 7'b0000000; #10;
+        
+        // Store: SH
+        opcode = 7'b0100011; funct3 = 3'b001; funct7 = 7'b0000000; #10;
+        
+        // Store: SB
+        opcode = 7'b0100011; funct3 = 3'b000; funct7 = 7'b0000000; #10;
+        
+        // Branch: BEQ
+        opcode = 7'b1100011; funct3 = 3'b000; funct7 = 7'b0000000; #10;
+        
+    end
+endmodule

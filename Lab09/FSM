@@ -1,0 +1,27 @@
+ // Simple FSM for reading switches and updating LEDs
+    parameter READ_STATE = 1'b0;
+    parameter UPDATE_STATE = 1'b1;
+    reg state = READ_STATE;
+
+    always @(posedge clk) begin
+        case (state)
+            READ_STATE: begin
+                // Delay cycle to allow combinational logic to settle
+                state <= UPDATE_STATE;
+            end
+            UPDATE_STATE: begin
+                // Map control signals to physical LEDs
+                led[0] <= RegWrite;
+                led[1] <= MemRead;
+                led[2] <= MemWrite;
+                led[3] <= ALUSrc;
+                led[4] <= MemtoReg;
+                led[5] <= Branch;
+                led[7:6] <= ALUOp;
+                led[11:8] <= ALUControl_out;
+                led[15:12] <= 4'b0000; // Unused LEDs off
+                
+                state <= READ_STATE;
+            end
+        endcase
+    end
